@@ -1,0 +1,12 @@
+#!/bin/bash
+yum update -y
+yum install -y nodejs git
+npm install -g pm2 
+cd /home/ec2-user
+git clone https://github.com/omar-khaled-2/money/api ./app
+cd app
+npm install
+PORT=80
+JWT_SECRET=${jwt_secret}
+MONGO_URL=${mongo_url}
+npm start 
