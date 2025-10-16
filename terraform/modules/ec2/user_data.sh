@@ -6,7 +6,7 @@ cd /home/ec2-user
 git clone https://github.com/omar-khaled-2/money.git ./app
 cd app/api
 npm install
-PORT=80
-JWT_SECRET=${jwt_secret}
-MONGO_URL=${mongo_url}
-npm start 
+export PORT=80
+export JWT_SECRET=${jwt_secret}
+export MONGO_URL=${mongo_url}
+npm build

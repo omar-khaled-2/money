@@ -44,16 +44,13 @@ resource "aws_launch_template" "api_instance_template" {
 
   image_id = "ami-052064a798f08f0d3"
 
-  instance_market_options {
-    market_type = "spot"
-  }
 
   iam_instance_profile {
     name = aws_iam_instance_profile.api_instance_profile.name
   }
   
 
-  instance_type = "t3.nano"
+  instance_type = "t3.medium"
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
     mongo_url = "mongodb://${var.mongo_username}:${var.mongo_password}@${var.mongo_endpoint}:27017/?tryWrites=false",
@@ -62,64 +59,67 @@ resource "aws_launch_template" "api_instance_template" {
 
 }
 
-resource "aws_autoscaling_group" "autoscaling_group" {
-  desired_capacity           = 2
-  min_size                   = 1
-  max_size                   = 4
-  vpc_zone_identifier        = var.public_subnet_ids
+# resource "aws_autoscaling_group" "autoscaling_group" {
+#   desired_capacity           = 2
+#   min_size                   = 1
+#   max_size                   = 4
+#   vpc_zone_identifier        = var.public_subnet_ids
 
-  launch_template {
-    id      = aws_launch_template.api_instance_template.id
-    version = "$Latest"
-  }
-
-
-}
-
-resource "aws_autoscaling_policy" "cpu_target_tracking" {
-  name                   = "cpu-scaling-policy"
-  policy_type            = "TargetTrackingScaling"
-  autoscaling_group_name = aws_autoscaling_group.autoscaling_group.name
-
-  target_tracking_configuration {
-    predefined_metric_specification {
-      predefined_metric_type = "ASGAverageCPUUtilization"
-    }
-
-    target_value = 50.0
-  }
-}
-resource "aws_lb" "load_balancer" {
-  name               = "web-lb"
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.ec2_sg.id]
-  subnets            = var.public_subnet_ids
-}
+#   launch_template {
+#     id      = aws_launch_template.api_instance_template.id
+#     version = "$Latest"
+#   }
 
 
-resource "aws_lb_target_group" "target_group" {
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = var.vpc_id
-}
+# }
+
+# resource "aws_autoscaling_policy" "cpu_target_tracking" {
+#   name                   = "cpu-scaling-policy"
+#   policy_type            = "TargetTrackingScaling"
+#   autoscaling_group_name = aws_autoscaling_group.autoscaling_group.name
+
+#   target_tracking_configuration {
+#     predefined_metric_specification {
+#       predefined_metric_type = "ASGAverageCPUUtilization"
+#     }
+
+#     target_value = 50.0
+#   }
+# }
+# resource "aws_lb" "load_balancer" {
+#   name               = "web-lb"
+#   load_balancer_type = "application"
+#   security_groups    = [aws_security_group.ec2_sg.id]
+#   subnets            = var.public_subnet_ids
+# }
 
 
-resource "aws_lb_listener" "web_listener" {
-  load_balancer_arn = aws_lb.load_balancer.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.target_group.arn
-  }
-}
+# resource "aws_lb_target_group" "target_group" {
+#   port     = 80
+#   protocol = "HTTP"
+#   vpc_id   = var.vpc_id
+#   health_check {
+#     path = "/health"
+#   }
+# }
 
 
-resource "aws_autoscaling_attachment" "asg_lb_attach" {
-  autoscaling_group_name = aws_autoscaling_group.autoscaling_group.name
-  lb_target_group_arn  = aws_lb_target_group.target_group.arn
-}
+# resource "aws_lb_listener" "web_listener" {
+#   load_balancer_arn = aws_lb.load_balancer.arn
+#   port              = "80"
+#   protocol          = "HTTP"
+
+#   default_action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.target_group.arn
+#   }
+# }
+
+
+# resource "aws_autoscaling_attachment" "asg_lb_attach" {
+#   autoscaling_group_name = aws_autoscaling_group.autoscaling_group.name
+#   lb_target_group_arn  = aws_lb_target_group.target_group.arn
+# }
 
 
 resource "aws_ssm_parameter" "ssm_mongodb_url" {
@@ -151,3 +151,9 @@ resource "aws_iam_role_policy_attachment" "ssm_access" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
+resource "aws_instance" "test" {
+    launch_template {
+      name = aws_launch_template.api_instance_template.name
+      version = "$Latest"
+    }
+}

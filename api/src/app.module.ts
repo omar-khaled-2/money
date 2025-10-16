@@ -7,29 +7,44 @@ import { UserModule } from './user/user.module';
 import { OtpModule } from './otp/otp.module';
 import { WalletModule } from './wallet/wallet.module';
 import { TransferModule } from './transfer/transfer.module';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { TransactionModule } from './transaction/transaction.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    JwtModule.register({
-      global: true,
-      secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
-    MongooseModule.forRoot(process.env.MONGO_URL!!,{
-      serverSelectionTimeoutMS:5000
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+
+      global:true,
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get<string>('JWT_SECRET'),
+        signOptions: { expiresIn: '1h' },
+      }),
     }),
-    AuthModule,UserModule, OtpModule,
-    
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URL'),
+        serverSelectionTimeoutMS: 5000,
+      }),
+      
+    }),
+    AuthModule,
+    UserModule,
+    OtpModule,
     WalletModule,
-     TransferModule,
-      TransactionModule
+    TransferModule,
+    TransactionModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
-
