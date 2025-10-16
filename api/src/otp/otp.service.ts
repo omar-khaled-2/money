@@ -52,7 +52,7 @@ export class  OtpService {
     }
 
     const publishCommand = new PublishCommand(publishCommandInput)
-
+    console.log(code)
     await snsClient.send(publishCommand)
     await otp.save()
 
