@@ -4,7 +4,7 @@ variable "vpc_id" {
 
 
 variable "public_subnet_ids" {
-  type = set(string)
+  type = list(string)
 }
 
 variable "ssm_mongodb_url_name" {

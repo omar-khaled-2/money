@@ -7,7 +7,13 @@ import { Otp, OtpDocument } from './otp.schema';
 import { UserService } from 'src/user/user.service';
 import { CreateOtpDto, VerifyOtpDto } from './dto';
 import crypto from "crypto";
-// import { CreateUserDto } from './dto';
+
+import { SNSClient, PublishCommand , PublishCommandInput } from "@aws-sdk/client-sns";
+
+
+const snsClient = new SNSClient({
+  region:"us-east-1"
+});
 
 @Injectable()
 export class  OtpService {
@@ -33,13 +39,21 @@ export class  OtpService {
   async create(createOtpDto:CreateOtpDto):Promise<void> {
     const {userId,purpose} = createOtpDto
     const user = await this.userService.get(userId);
-
+    if(!user)
+      throw "User Not found"
     const code = this.generateOtp()
-
-    console.log(code)
     const hashedCode = this.hashOtp(code)
     const expiresAt = new Date(Date.now() + 1000 * 60 * 10);
     const otp = new this.otpModel({ hashed_code: hashedCode, userId,purpose,expiresAt });
+
+    const publishCommandInput:PublishCommandInput = {
+      PhoneNumber:user.phone,
+      Message: `Your OTP is: ${code}`,
+    }
+
+    const publishCommand = new PublishCommand(publishCommandInput)
+
+    await snsClient.send(publishCommand)
     await otp.save()
 
   }

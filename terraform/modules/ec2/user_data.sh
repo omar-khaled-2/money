@@ -8,6 +8,7 @@ cd app/api
 npm install
 echo PORT=80 >> .env
 echo JWT_SECRET=${jwt_secret} >> .env
-echo MONGO_URL=${mongo_url} >> .env
+echo "MONGO_URL=${mongo_url}" >> .env
 npm run build
+npm run start:prod
 
