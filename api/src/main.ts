@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule,{abortOnError:false});
   app.useGlobalPipes(
@@ -11,11 +11,8 @@ async function bootstrap() {
       transform: true,      
     }),
   );
-  const configService = app.get(ConfigService);
+  await app.listen(process.env.PORT!);
+  console.log("Running on Port " + process.env.PORT!);
 
-
-  const port = configService.get<number>('PORT')!
-  await app.listen(port);
-  console.log(`Application running on: http://localhost:${port}`);
 }
 bootstrap();
